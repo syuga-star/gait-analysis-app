@@ -123,7 +123,7 @@ startBtn.addEventListener('click', async () => {
             if (response === 'granted') {
                 startListening();
             } else {
-                status.innerText = ⚠️ センサーのアクセスが拒否されました';
+                status.innerText = '⚠️ センサーのアクセスが拒否されました';
             }
         } catch (e) {
             status.innerText = 'エラー: ' + e;
