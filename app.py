@@ -2,6 +2,7 @@ import glob
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 # --- 文字化け対策（Python 3.12対応 / OS標準フォントの設定） ---
 plt.rcParams['font.family'] = 'sans-serif'
@@ -90,6 +91,64 @@ else:
   df_test = pd.read_csv(test_file)
   normal_name = normal_file
   test_name = test_file
+
+
+
+# ==========================================
+# センサー直接取得機能（JavaScript連携）
+# ==========================================
+st.subheader("📱 スマホで直接リアルタイム計測")
+
+sensor_html = """
+<div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px;">
+    <button id="startBtn" style="padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 5px;">計測開始（センサー許可）</button>
+    <p id="status" style="margin-top: 10px; font-weight: bold;">ボタンを押して計測を開始してください</p>
+    <div id="output" style="font-family: monospace;">
+        Z軸 (上下): <span id="accZ">0.00</span> m/s²<br>
+        Y軸 (左右): <span id="accY">0.00</span> m/s²
+    </div>
+</div>
+
+<script>
+const startBtn = document.getElementById('startBtn');
+const status = document.getElementById('status');
+const accZ = document.getElementById('accZ');
+const accY = document.getElementById('accY');
+
+startBtn.addEventListener('click', async () => {
+    // iOS 13+ のパーミッション要求
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+            const response = await DeviceMotionEvent.requestPermission();
+            if (response === 'granted') {
+                startListening();
+            } else {
+                status.innerText = ⚠️ センサーのアクセスが拒否されました';
+            }
+        } catch (e) {
+            status.innerText = 'エラー: ' + e;
+        }
+    } else {
+        // Android / 古いiOS
+        startListening();
+    }
+});
+
+function startListening() {
+    status.innerText = '🟢 計測中... スマホを動かしてください';
+    window.addEventListener('devicemotion', (event) => {
+        const acc = event.accelerationIncludingGravity || event.acceleration;
+        if (acc) {
+            accZ.innerText = (acc.z || 0).toFixed(2);
+            accY.innerText = (acc.y || 0).toFixed(2);
+        }
+    });
+}
+</script>
+"""
+
+components.html(sensor_html, height=180)
+
 
 # ==========================================
 # 2. カラム自動判別
